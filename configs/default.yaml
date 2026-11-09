@@ -1,0 +1,6 @@
+# Development defaults. Formal mode is intentionally blocked in the MVP.
+mode: development
+max_experiments: 1
+budget_rmb: 20
+output_dir: ../outputs
+price_file: model_prices.yaml

@@ -1,0 +1,8 @@
+# Documented task metadata. Text training intentionally raises TODO in this MVP.
+modality: text
+task_type: binary
+train_path: ../headlines_ctr_clean/train.csv
+validation_path: ../headlines_ctr_clean/val.csv
+test_path: ../headlines_ctr_clean/test.csv
+target_column: label_pairwise
+metric: accuracy

@@ -1,0 +1,6 @@
+# TODO: enter verified OFFICIAL standard prices as of 2026-10-21.
+# RMB per 1,000,000 input/output tokens; never use cached/promotional prices.
+# Formal mode rejects this unconfigured table.
+# Each entry needs official_release_date, price_as_of, official_source_url,
+# input_rmb_per_million_tokens, output_rmb_per_million_tokens.
+models: {}

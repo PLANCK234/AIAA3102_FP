@@ -1,0 +1,5 @@
+Use your SuperAgent to develop a classifier that predicts whether a driver would accept an offered coupon (`1` = accept, `0` = decline). For each split (`train`, `val`, and `test`), the `C_*.npy` file contains features describing the coupon, the driver, and the driving context. The corresponding `y_*.npy` file contains the labels in the same row order. Load the feature arrays (`C_*.npy`) with `np.load(path, allow_pickle=True)`. Use the test set only for final evaluation and report **test accuracy**.
+
+The columns in each `C_*.npy` file, from left to right, are `temperature`, `time`, `coupon`, `expiration`, `gender`, `age`, `maritalStatus`, `has_children`, `education`, `occupation`, `income`, `Bar`, `CoffeeHouse`, `CarryAway`, `RestaurantLessThan20`, `Restaurant20To50`, `toCoupon_GEQ5min`, `toCoupon_GEQ15min`, `toCoupon_GEQ25min`, `direction_same`, `direction_opp`.
+
+See the [UCI dataset page](https://archive.ics.uci.edu/dataset/603/in+vehicle+coupon+recommendation) for the original feature descriptions. Here, `GEQ` means “at least” and `opp` means “opposite direction”.
