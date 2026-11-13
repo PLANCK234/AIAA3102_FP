@@ -26,6 +26,7 @@ class TaskSpec:
     test_labels_path: Path | None = None
     feature_names: tuple[str, ...] | None = None
     validation_fraction: float | None = None
+    validation_seed: int = 42
 
     def __post_init__(self) -> None:
         if self.modality not in ("tabular", "text", "image"):
@@ -44,6 +45,10 @@ class TaskSpec:
             raise ValueError("Paired NPY input requires train_labels_path")
         if self.validation_path is not None and self.validation_path.suffix.lower() == ".npy" and self.validation_labels_path is None:
             raise ValueError("Paired NPY validation requires validation_labels_path")
+        development = {p.resolve() for p in (self.train_path, self.train_labels_path, self.validation_path, self.validation_labels_path) if p is not None}
+        held_out = {p.resolve() for p in (self.test_path, self.test_labels_path) if p is not None}
+        if development & held_out:
+            raise ValueError("Test files must not also be train or validation files")
 
 
 @dataclass(frozen=True)

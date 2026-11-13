@@ -142,3 +142,7 @@ python main.py predict --model outputs/<run-id>/model.joblib --data in_vehicle_c
 5. 实现严格隔离的最终 test 评估、异常恢复、冻结版本复现和课程提交产物。未来任务的标签、划分、指标须待发布后确认。
 
 具体责任、依赖与验收标准见 `TEAM.md` 和 `TASKS.md`。接手者修改代码后，应同步更新 `STATUS.md` 与本文相关章节；不要把 Mock 的验证记录描述成正式成绩。
+
+## 后续更新：2026-11-13
+
+本文第 3–7 节记录初始化时的历史快照。随后 Member A 已增加 OpenAI 兼容客户端、模拟用量审计、多轮 JSON 决策及验证选模，并接入开发 Runner；详细实现、验证、未完成事项见 `A_WORK.md`，相关知识和论文见 `KNOWLEDGE.md`。真实平台和价格未核验，正式模式仍关闭。

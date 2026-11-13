@@ -22,7 +22,7 @@ def train_validate(task: TaskSpec, config: ExperimentConfig, model_path: Path) -
         train, validation = train_test_split(
             training,
             test_size=task.validation_fraction,
-            random_state=config.random_seed,
+            random_state=task.validation_seed,
             stratify=labels,
         )
     else:

@@ -1,6 +1,6 @@
 # AIAA3102 Final Project — General Algorithm SuperAgent
 
-这是一个**开发阶段 MVP**：同一套接口接收分类任务配置，分析训练数据、生成基线实验、在验证集评估、保存包含预处理的模型，并输出 JSONL 审计日志。当前 Planner 是固定规则 Mock，**不具备 LLM 自主实验规划或反馈改进能力**；其结果不能当作课程正式评估结果。
+这是一个**开发阶段 MVP**：同一套接口接收分类任务配置、执行表格实验、评估并保存包含预处理的模型。默认使用固定 Mock Planner；显式启用开发模式后，已通过学校 API 验证 Qwen、DeepSeek 单次调用及 DeepSeek 反馈驱动的表格多轮实验。历史官方价格和 Token 上限尚未核验，正式模式仍关闭；开发结果不能作为课程正式评估结果。
 
 ## 课程要求摘要
 
@@ -14,7 +14,7 @@ Agent 仅可使用截至 **2026-10-21** 正式发布的 Qwen/DeepSeek 模型；�
 flowchart TD
   CLI[main.py CLI] --> Runner[runtime.runner]
   Runner --> Controller[agent.controller]
-  Controller --> Planner[agent.planner / Mock]
+  Controller --> Planner[agent.planner / Mock 或 LLM]
   Controller --> Reflection[agent.reflection / Mock]
   Runner --> Analyzer[tools.data_analyzer]
   Runner --> Trainer[tools.training]
@@ -49,11 +49,11 @@ conda activate coursework
 python -m pip install -r requirements.txt
 ```
 
-若 PowerShell 尚未启用 `conda activate`，可用 `conda run -n coursework python main.py ...`。不需建立项目虚拟环境。API Key 将来从环境变量读取，参考 `.env.example`；MVP 不发起付费调用。
+若 PowerShell 尚未启用 `conda activate`，可用 `conda run -n coursework python main.py ...`。不需建立项目虚拟环境。API Key 从环境变量读取，参考 `.env.example`；默认 Mock 不调用模型，显式选择 `--planner llm`、`--planner llm-dev` 或 `llm-test` 才会请求已配置的供应商并可能产生费用。
 
 ## 配置与运行
 
-`configs/default.yaml` 配置模式、实验上限、20 元预算、输出目录及价格表。`configs/model_prices.yaml` **故意留空**，待人工核验 2026-10-21 的官方标准价与官方来源；不得把测试夹具价当官方价。正式模式价格配置缺失即拒绝；即使配置价格，真实 LLM 适配、自主规划及用量审计完成前仍拒绝运行。预算模块对每次真实调用要求预留输入加最大输出成本，并按实际 Token 记账；不接受缺失用量视为零成本。
+`configs/default.yaml` 配置模式、实验上限、20 元预算、输出目录及价格表。`configs/model_prices.yaml` **故意留空**，待人工核验 2026-10-21 的官方标准价与官方来源；不得把测试夹具价当官方价。学校提供的 API 地址已记录在 `.env.example`；模型名称、后端版本、发布证据和使用限制见 `A_WORK.md`。正式模式价格配置缺失即拒绝，即使配置了价格，真实平台兼容性、计费、其余模态和正式评估尚未验证时仍拒绝运行。客户端用配置的输入 Token 上界及最大输出量进行预检，按返回的实际 Token 记账；缺失用量会阻断后续调用。输入上界必须包含供应商附加开销并经独立核验；当前代码无法验证这一假设。
 
 任务 YAML 中路径相对其自身文件解析。`configs/coupon_development.yaml` 是已有表格任务的**数据配置**，代码不按数据集名称分支。`configs/headlines_development.yaml` 记录了文本任务，当前运行会明确报 TODO。`TaskSpec.test_path` 和 `test_labels_path` 只记录最终评估路径，开发 Runner 从不加载。
 
@@ -72,6 +72,13 @@ python main.py predict --model outputs/<run-id>/model.joblib --data in_vehicle_c
 
 `predict` 仅重新加载模型和预处理，不训练、不选模型。正式任务的 test 预测必须等候自主版本冻结并按任务要求执行；当前 Mock 模型输出不可当最终提交。`--mode formal` 会失败关闭。
 
+真实 API 开发测试须在进程环境中设置 `SUPERAGENT_API_KEY`、`SUPERAGENT_BASE_URL` 和 `SUPERAGENT_MODEL`，然后显式执行以下命令。`llm-dev` 不按课程官方价格计费，仅记录真实 Token、调用次数和未知费用；它不构成正式预算保护。请根据需要设置调用次数上限。
+
+```powershell
+python main.py llm-test --model Qwen3.8-27B
+python main.py run --task configs/coupon_development.yaml --planner llm-dev --max-llm-calls 3 --max-experiments 2
+```
+
 ## 已有数据集检查
 
 | 目录 | 格式与字段 | 划分和标签 | 评价 |
@@ -84,7 +91,8 @@ python main.py predict --model outputs/<run-id>/model.joblib --data in_vehicle_c
 ## 当前能力与限制
 
 - **已实现**：CSV / 配对 NPY 表格检查；缺失统计与标签计数；训练与独立验证；数值缺失填补、类别填补与 one-hot；逻辑回归分类；accuracy / macro F1；完整 pipeline 保存/加载预测；JSONL 决策与实验日志；预算计算与超额拦截；Mock 状态机；pytest。
-- **未实现**：真正的 Qwen/DeepSeek Client、调用/Token 审计接线、基于反馈的多轮自主搜索、文本/图像训练、资源超时强制执行、正式最终评估与提交产物。因此正式模式禁止启动。
+- **新增开发能力**：OpenAI 兼容客户端、逐次用量日志、多轮结构化 JSON 决策与参数校验、验证指标选模；已用模拟供应商和真实课程平台验证。支持的实验目前仅为逻辑回归及其参数。
+- **未实现或待验证**：官方历史价格与可靠输入 Token 上界、正式预算和跨进程未知用量恢复、文本/图像训练、资源超时强制执行、正式最终评估与提交产物。因此正式模式禁止启动。
 - 开发日志中的 `llm_calls=0` 仅表示 Mock 没有发起模型调用；这是事实记录，不能代表正式自主 Agent 成本。
 
-初始化过程、逐文件说明与复现证据见 `AI_WORK.md`；详细模块分工见 `TEAM.md`，任务见 `TASKS.md`，当前进度见 `STATUS.md`。
+初始化过程见 `AI_WORK.md`，A 任务实现和接入说明见 `A_WORK.md`，知识与论文见 `KNOWLEDGE.md`；详细模块分工见 `TEAM.md`，任务见 `TASKS.md`，当前进度见 `STATUS.md`。
